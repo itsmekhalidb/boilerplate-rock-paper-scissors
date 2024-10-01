@@ -1,7 +1,7 @@
 import numpy as np
 import random
 
-Q = np.zeros((3,3))
+Q = np.zeros((3,3)) 
 
 STATES = ["R", "P", "S"]
 ROCK = 0
@@ -16,61 +16,50 @@ def encode_Move(letter):
     else:
         return SCISSORS
 
+def decode_Move(number):
+    return STATES[number]
+
 def get_Reward(opp, action):
     if opp == action:
         return 0
-    elif STATES[opp] == "R" and STATES[action] == "S":
-        return -1
-    elif STATES[opp] == "S" and STATES[action] == "P":
-        return -1
-    elif STATES[opp] == "P" and STATES[action] == "R":
+    elif (opp == ROCK and action == SCISSORS) or \
+         (opp == SCISSORS and action == PAPER) or \
+         (opp == PAPER and action == ROCK):
         return -1
     else:
         return 1
 
+def get_next_state(opp):
+    return (opp + 1) % 3
+
 def q_Learning(opp):
-
-    EPISODES = 1500
-
-    LEARNING_RATE = 0.05
+    EPISODES = 100
+    LEARNING_RATE = .95
     GAMMA = 0.96
-
     EPSILON = 0.9
 
     for e in range(EPISODES):
-        reward = 0
+        total_reward = 0
+        
         for x in range(len(STATES)):
             if np.random.uniform(0, 1) < EPSILON:
-                action = encode_Move(random.choice(STATES))
+                action = random.choice([ROCK, PAPER, SCISSORS])
             else:
-                ind = np.unravel_index(np.argmax(Q[opp, :]), Q.shape)
-                action = encode_Move(STATES[ind[1]])
+                action = np.argmax(Q[opp, :])
             
-            reward += get_Reward(opp, action)
-            if opp == 2:
-                next_state = 0
-            else:
-                next_state = opp + 1
+            reward = get_Reward(opp, action)
+            total_reward += reward
+
+            next_state = get_next_state(opp)
             
-            Q[opp, action] = Q[opp, action] + LEARNING_RATE * (reward + GAMMA * np.max(Q[next_state, :]) - Q[opp, action])
-            EPSILON -= 0.001
-    ind = np.unravel_index(np.argmax(Q[opp, :]), Q.shape)
-    action = encode_Move(STATES[ind[1]])
+            Q[opp, action] = Q[opp, action] + LEARNING_RATE * (total_reward + GAMMA * np.max(Q[next_state, :]) - Q[opp, action])
+            EPSILON = max(0.1, EPSILON * 0.99)
+
+    action = np.argmax(Q[opp, :])
     return action
 
 def player(prev_play, opponent_history=[]):
     opponent_history.append(prev_play)
     action = q_Learning(encode_Move(prev_play))
-    guess = STATES[action]
+    guess = decode_Move(action)
     return guess
-
-# The example function below keeps track of the opponent's history and plays whatever the opponent played two plays ago. It is not a very good player so you will need to change the code to pass the challenge.
-
-# def player(prev_play, opponent_history=[]):
-#     opponent_history.append(prev_play)
-
-#     guess = "R"
-#     if len(opponent_history) > 2:
-#         guess = opponent_history[-2]
-
-#     return guess
