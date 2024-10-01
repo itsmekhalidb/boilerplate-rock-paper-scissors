@@ -7,6 +7,10 @@ STATES = ["R", "P", "S"]
 ROCK = 0
 PAPER = 1
 SCISSORS = 2
+NUM_RUNS = 0
+
+def reset():
+    Q = np.zeros((3,3))
 
 def encode_Move(letter):
     if letter == "R":
@@ -35,7 +39,7 @@ def get_next_state(opp):
 def q_Learning(opp):
     EPISODES = 100
     LEARNING_RATE = .95
-    GAMMA = 0.96
+    GAMMA = 0.97
     EPSILON = 0.9
 
     for e in range(EPISODES):
@@ -59,7 +63,11 @@ def q_Learning(opp):
     return action
 
 def player(prev_play, opponent_history=[]):
+    global NUM_RUNS
     opponent_history.append(prev_play)
     action = q_Learning(encode_Move(prev_play))
     guess = decode_Move(action)
+    NUM_RUNS += 1
+    if NUM_RUNS % 1000 == 0:
+        reset()
     return guess
